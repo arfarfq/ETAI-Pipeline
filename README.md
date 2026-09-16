@@ -1,6 +1,8 @@
+# Samir Haffegee ETAI Project
+
 # Baseline Predictive Pipeline -- ETAI
 
-This is the **starting point** for your semester project: a small but *complete* predictive pipeline -- every piece a real project needs (entry point, config, data loading, preprocessing, model, evaluation), just kept as simple as possible for now.
+This is the **starting point** for your semester project: a small but _complete_ predictive pipeline -- every piece a real project needs (entry point, config, data loading, preprocessing, model, evaluation), just kept as simple as possible for now.
 
 The task: predict two-year recidivism using ProPublica's COMPAS
 dataset -- the data behind a real 2016 investigation into a risk-
@@ -33,15 +35,16 @@ go on.
 
 This table is updated after each practical class, so you can always see what changed in the pipeline and why -- it's a running log, not a fixed syllabus.
 
-| Week | Practical class focus | Added to the pipeline |
-|------|------------------------|------------------------|
-| 2 | Introduction & baseline pipeline | Initial version: project structure, a single naive train/test split (no cross-validation), minimal preprocessing (drop rows with missing values, one-hot encode categoricals), logistic regression baseline, a first (deliberately simple) fairness check comparing our model's and COMPAS's own false-positive rate by race, train-vs-test accuracy reporting (to start spotting overfitting), and each run's full report saved automatically to `results/` |
+| Week | Practical class focus            | Added to the pipeline                                                                                                                                                                                                                                                                                                                                                                                                                                        |
+| ---- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 2    | Introduction & baseline pipeline | Initial version: project structure, a single naive train/test split (no cross-validation), minimal preprocessing (drop rows with missing values, one-hot encode categoricals), logistic regression baseline, a first (deliberately simple) fairness check comparing our model's and COMPAS's own false-positive rate by race, train-vs-test accuracy reporting (to start spotting overfitting), and each run's full report saved automatically to `results/` |
 
 ## Environment setup
 
 You only need to do this once per machine.
 
 ### macOS / Linux
+
 ```bash
 python3 -m venv venv                 # creates an isolated Python environment in a folder called "venv"
 source venv/bin/activate             # activates it -- packages install here, not system-wide, and stay out of your other projects
@@ -49,18 +52,23 @@ pip install -r requirements.txt      # installs the exact packages this project 
 ```
 
 ### Windows -- PowerShell
+
 ```powershell
 python -m venv venv                  # creates an isolated Python environment in a folder called "venv"
 venv\Scripts\activate                # activates it -- packages install here, not system-wide, and stay out of your other projects
 pip install -r requirements.txt      # installs the exact packages this project needs, into that environment
 ```
+
 If PowerShell blocks the activation script, run this once first:
+
 ```powershell
 Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 ```
 
 ### Windows -- cmd.exe
+
 Same three steps as above, just with cmd's own activation command:
+
 ```cmd
 python -m venv venv
 venv\Scripts\activate.bat
@@ -74,12 +82,14 @@ Once the environment is active you'll see `(venv)` at the start of your prompt. 
 Creating the environment and installing packages only needs to happen once, ever. Every other time you sit down to work -- a new terminal window, the next practical class, tomorrow -- you don't repeat any of the steps above. From the project's root folder, you just need to:
 
 **macOS / Linux**
+
 ```bash
 source venv/bin/activate
 python main.py
 ```
 
 **Windows**
+
 ```powershell
 venv\Scripts\activate
 python main.py
@@ -91,12 +101,14 @@ That's it -- activate, then run. If you don't see `(venv)` at the start of your 
 
 With the environment active (see above), from the project's root
 folder, on any OS:
+
 ```bash
 python main.py
 ```
 
 This loads `config.yaml`, loads and preprocesses the data, trains the model, and prints:
-- **train accuracy and test accuracy, side by side.** Comparing the two is how you catch overfitting: if the model looks much better on the data it was trained on than on data it's never seen, it has memorised rather than learned something that generalises. 
+
+- **train accuracy and test accuracy, side by side.** Comparing the two is how you catch overfitting: if the model looks much better on the data it was trained on than on data it's never seen, it has memorised rather than learned something that generalises.
 - a classification report on the test set
 - a false-positive-rate-by-race comparison between our model and
   COMPAS's own score
