@@ -1,4 +1,38 @@
-# Samir Haffegee ETAI Project
+# Samir Haffegee (20260618) ETAI Project
+
+## Overview
+
+This project predicts two-year recidivism (two_year_recid) using demographic, age, juvenile-offense, prior-offense, and charge-related features from the COMPAS dataset. The project contains missing values, invalid values, inconsistencies, duplicates and other issues.
+
+The preprocessing pipeline focuses on preparing the data in an appropriate manner for subsequent machine learning models.
+
+Currently, there have bee
+
+The project is interesting because the dataset contains missing and invalid values, categorical inconsistencies, duplicate records, and variables associated with the COMPAS scoring system. The preprocessing pipeline therefore focuses not only on preparing the data for machine learning, but also on making the cleaning decisions explicit and reproducible.
+The project also treats race as a sensitive attribute so that model performance can be evaluated separately from the features used for prediction. The original COMPAS variables decile_score and score_text are excluded from the predictive features because they are COMPAS-generated scores rather than independent input variables.
+
+## Pipeline progress
+
+### Preprocessing decisions
+
+- Converted placeholder tokens to missing values.
+
+- Canonicalized categorical values so equivalent values use a single representation:
+  - For example, male, MALE, and Male → Male.
+  - african-american, African American, and capitalization/whitespace variants → African-American.
+
+- Converted numeric columns to appropriate numeric types.
+
+- Applied the domain rules from the YAML configuration rather than hard-coding them into the cleaning pipeline.
+
+- Removed exact duplicate rows.
+
+- Removed repeated IDs while retaining the first occurrence.
+- Removed columns identified as unnecessary for the final dataset, including prior_offenses, age_in_months, juvenile_total, and id.
+
+## Best Model
+
+Best model is the one with the cleaned dataset
 
 # Baseline Predictive Pipeline -- ETAI
 
@@ -123,3 +157,5 @@ You're free to improve on this structure or restructure it entirely -- what matt
 ## Dataset
 
 See `data/README.md`.
+
+# Project Timeline
