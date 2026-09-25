@@ -32,23 +32,23 @@ error.
 
 ## Data dictionary
 
-| column | type | description | notable values |
-|--------|------|--------------|------------------|
-| `id` | identifier | internal record id | not a model feature |
-| `sex` | categorical | defendant's sex | `Male`, `Female` |
-| `age` | numeric | defendant's age (years) at screening | |
-| `age_cat` | categorical | age bucket | `Less than 25`, `25 - 45`, `Greater than 45` |
-| `race` | categorical | defendant's race, as recorded | `African-American`, `Caucasian`, `Hispanic`, `Asian`, `Native American`, `Other`; excluded from model features, used only to audit fairness |
-| `juv_fel_count` | numeric | number of prior juvenile felony offenses | |
-| `juv_misd_count` | numeric | number of prior juvenile misdemeanor offenses | |
-| `juv_other_count` | numeric | number of other prior juvenile offenses | |
-| `juvenile_total` | numeric | total juvenile offenses | |
-| `priors_count` | numeric | number of prior adult offenses | |
-| `prior_offenses` | numeric | number of prior offenses | |
-| `age_in_months` | numeric | age expressed in months | |
-| `c_charge_degree` | categorical | degree of the current charge | `F` (felony), `M` (misdemeanor) |
-| `decile_score` | numeric | COMPAS's own risk score | 1 (lowest risk) to 10 (highest risk); excluded from model features, used only for comparison |
-| `score_text` | categorical | COMPAS's own risk category | `Low`, `Medium`, `High`; excluded from model features, used only for comparison |
-| `two_year_recid` | binary | **target** -- was this person rearrested within two years? | `0` = no, `1` = yes |
+| column            | type        | description                                                | notable values                                                                                                                              |
+| ----------------- | ----------- | ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------- |
+| `id`              | identifier  | internal record id                                         | not a model feature                                                                                                                         |
+| `sex`             | categorical | defendant's sex                                            | `Male`, `Female`                                                                                                                            |
+| `age`             | numeric     | defendant's age (years) at screening                       |                                                                                                                                             |
+| `age_cat`         | categorical | age bucket                                                 | `Less than 25`, `25 - 45`, `Greater than 45`                                                                                                |
+| `race`            | categorical | defendant's race, as recorded                              | `African-American`, `Caucasian`, `Hispanic`, `Asian`, `Native American`, `Other`; excluded from model features, used only to audit fairness |
+| `juv_fel_count`   | numeric     | number of prior juvenile felony offenses                   |                                                                                                                                             |
+| `juv_misd_count`  | numeric     | number of prior juvenile misdemeanor offenses              |                                                                                                                                             |
+| `juv_other_count` | numeric     | number of other prior juvenile offenses                    |                                                                                                                                             |
+| `juvenile_total`  | numeric     | total juvenile offenses                                    |                                                                                                                                             |
+| `priors_count`    | numeric     | number of prior adult offenses                             |                                                                                                                                             |
+| `prior_offenses`  | numeric     | number of prior offenses                                   |                                                                                                                                             |
+| `age_in_months`   | numeric     | age expressed in months                                    |                                                                                                                                             |
+| `c_charge_degree` | categorical | degree of the current charge                               | `F` (felony), `M` (misdemeanor)                                                                                                             |
+| `decile_score`    | numeric     | COMPAS's own risk score                                    | 1 (lowest risk) to 10 (highest risk); excluded from model features, used only for comparison                                                |
+| `score_text`      | categorical | COMPAS's own risk category                                 | `Low`, `Medium`, `High`; excluded from model features, used only for comparison                                                             |
+| `two_year_recid`  | binary      | **target** -- was this person rearrested within two years? | `0` = no, `1` = yes                                                                                                                         |
 
 Source: derived from [propublica/compas-analysis](https://github.com/propublica/compas-analysis) (the data behind the "Machine Bias" investigation). Personally-identifying columns (name, date of birth, case numbers, charge descriptions) were removed.
