@@ -30,6 +30,9 @@ The project also treats race as a sensitive attribute so that model performance 
 - Removed repeated IDs while retaining the first occurrence.
 - Removed columns identified as unnecessary for the final dataset, including prior_offenses, age_in_months, juvenile_total, and id.
 
+### Week 3
+
+Split the data and standardised it with new scaler. Added an encoder for categorical data. Potentially need to look in to which encoder will be best. Note that once the split is done, the test data is not toucher. Standardisation is local. Note that splitting can be improved to use StratifiedKfold. Right now there is simply an 80/20 split. 
 ## Best Model
 
 Best model is the one with the cleaned dataset
