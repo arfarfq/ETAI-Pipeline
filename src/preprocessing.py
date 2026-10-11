@@ -46,40 +46,6 @@ _ENCODERS = {
 }
 
 
-def find_placeholder_rows(series: pd.Series, tokens: set) -> pd.Series:
-    return series.astype(str).str.strip().isin(tokens)
-
-
-def canonicalize_categories(df: pd.DataFrame, columns_and_maps: dict, placeholder_tokens: set) -> pd.DataFrame:
-    out = df.copy()
-    for col, mapping in columns_and_maps.items():
-        if col not in out.columns:
-            continue
-        cleaned = out[col].astype(str).str.strip()
-        lowered = cleaned.str.lower()
-        out[col] = lowered.map(mapping).fillna(cleaned)
-        out.loc[out[col].astype(str).str.strip().isin(placeholder_tokens), col] = np.nan
-    return out
-
-def apply_domain_rules(df, domain_rules):
-    out = df.copy()
-
-    for column, rule in domain_rules.items():
-        if column not in out.columns:
-            continue
-
-        mask = out[column].notna()
-
-        if "min" in rule:
-            mask &= out[column] >= rule["min"]
-
-        if "max" in rule:
-            mask &= out[column] <= rule["max"]
-
-        out.loc[~mask, column] = np.nan
-
-    return out
-
 def add_missingness_indicators(df: pd.DataFrame, mnar_indicator_sources: list) -> pd.DataFrame:
     """Adds a `<col>_was_missing` flag for each MNAR-diagnosed column, before that
     column gets imputed -- so a model can still see the pattern even though the fill
@@ -90,40 +56,6 @@ def add_missingness_indicators(df: pd.DataFrame, mnar_indicator_sources: list) -
             out[f"{col}_was_missing"] = out[col].isna().astype(int)
     return out
 
-def drop_duplicates(df: pd.DataFrame, id: list):
-    out = df.drop_duplicates()
-    if "id" in out.columns:
-        out = out.drop_duplicates(subset="id", keep="first")
-
-    return out
-
-
-def clean_dataset(df: pd.DataFrame, diagnosis: dict) -> pd.DataFrame:
-    """
-    Apply the EDA notebook's diagnosis: category cleanup, domain-rule / placeholder ->
-    NaN conversion, de-duplication, redundant-column removal. Target-column-agnostic --
-    safe to call on label-free inference data.
-    """
-    out = df.copy()
-    placeholder_tokens = set(diagnosis["placeholder_tokens"])
-
-    # numeric columns that loaded as text because of placeholder tokens
-    for col in ["priors_count", "prior_offenses"]:
-        if col in out.columns:
-            out[col] = pd.to_numeric(out[col].replace(list(placeholder_tokens), np.nan), errors="coerce")
-
-    # domain-rule violations -> NaN
-    out = apply_domain_rules(out, diagnosis["domain_rules"])
-
-    # category canonicalization (also folds placeholder tokens in race/sex/c_charge_degree/score_text to NaN)
-    out = canonicalize_categories(out, diagnosis["canonical_maps"], placeholder_tokens)
-
-
-    # redundant columns found via multicollinearity
-    cols_to_drop = [c for c in diagnosis["columns_to_drop"] if c in out.columns and c != "id"]
-    out = out.drop(columns=cols_to_drop)
-
-    return out
 
 
 def build_preprocessor(preprocessing_config: dict) -> ColumnTransformer:
@@ -199,39 +131,3 @@ def split_dev_test(X, y, extras, test_size: float, random_state: int):
         X, y, extras, test_size=test_size, random_state=random_state, stratify=y
     )
     return X_dev, X_test, y_dev, y_test, extras_dev, extras_test
-
-
-
-def preprocess(
-    df_raw: pd.DataFrame,
-    config: dict,
-    target: str,
-    sensitive_attr: str,
-    drop_columns: list,
-    test_size: float,
-    random_state: int,
-):
-
-    df = clean_dataset(df=df_raw, diagnosis=config["diagnostics"])
-
-    # training data only: the same person must not count twice, or sit in both dev and test
-    df = drop_duplicates(df, config["diagnostics"]["id_column"])  
-
-    mnar_sources = config["preprocessing"]["mnar_indicator_sources"]
-
-    X, y, extras = split_features_target(df, config["data"], mnar_sources)
-
-    X_train, X_test, y_train, y_test, extras_test = split_dev_test(
-        X, y, extras,
-        test_size=config["test_set"]["size"],
-        random_state=config["test_set"]["random_state"],
-    )
-
-    preprocessor = build_preprocessor(config["preprocessing"])
-
-    pipeline = Pipeline([
-        ("prep", build_preprocessor(config["preprocessing"])),
-        ("model", build_model(config["model"])),
-    ])
-
-    return X_train, X_test, y_train, y_test, extras_test
