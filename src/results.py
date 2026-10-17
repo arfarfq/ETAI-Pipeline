@@ -16,11 +16,13 @@ def save_run(results_dir: str, config: dict, report_text: str) -> str:
     os.makedirs(results_dir, exist_ok=True)
 
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    path = os.path.join(results_dir, f"run_{timestamp}.txt")
+    model = config["model"]["type"]
+    path = os.path.join(results_dir, f"Model_{model}_{timestamp}.txt")
 
     header = (
         f"Run: {timestamp}\n"
         f"Model: {config['model']['type']}  params={config['model']['params']}\n"
+        f"Engineered Features: {'On' if config['engineered_features'] else 'Off'}\n"
         f"Test size: {config['split']['test_size']}  "
         f"random_state: {config['split']['random_state']}\n"
         + "=" * 60 + "\n\n"

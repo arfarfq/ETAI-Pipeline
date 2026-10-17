@@ -13,7 +13,7 @@ from sklearn.pipeline import Pipeline
 import optuna
 
 from src.data import load_data
-from src.preprocessing_old import clean_dataset, split_features_target, split_dev_test, build_preprocessor
+from src.preprocessing import split_features_target, split_dev_test, build_preprocessor, add_engineered_features
 from src.model import build_model
 from src.evaluate import fairness_report
 from src.results import save_run
@@ -32,15 +32,17 @@ def main():
 
     config = load_config()
 
-
     # Load the raw data, clean it, and split into features and target
     df_raw = load_data(config["data"]["path"])
 
+
     df = clean_dataset(df=df_raw, diagnosis=config["diagnostics"])
 
+    if config["engineered_features"] == True:
+    
+            df = add_engineered_features(df)   
 
-    mnar_sources = config["preprocessing"]["mnar_indicator_sources"]
-    X, y, extras = split_features_target(df, config["data"], mnar_sources)
+    X, y, extras = split_features_target(df, config["data"], config["preprocessing"]["mnar_indicator_sources"])
 
     X_dev, X_test, y_dev, y_test, extras_dev, extras_test = split_dev_test(
     X, y, extras,
@@ -49,9 +51,11 @@ def main():
     )
 
     pipeline = Pipeline([
-        ("prep", build_preprocessor(config["preprocessing"])),
+        ("prep", build_preprocessor(config)),
         ("model", build_model(config["model"])),
     ])
+
+    #############################################################################
 
     # Set up cross-validation and evaluate the model using the
     cv_config = config["cv"]
@@ -70,7 +74,9 @@ def main():
     # Cross-validation on the development set, to get an honest estimate of the model's performance before tuning
     fold_scores, y_oof = cross_validate_pipeline(pipeline, X_dev, y_dev, cv, scoring, n_jobs=n_jobs)
 
+    #############################################################################
 
+    
     header = f"Hyperparameters from config.yaml: {config['model'].get('params')}"
     print(header)
     report = header + "\n" + cv_report(fold_scores, scoring)
@@ -145,8 +151,7 @@ def main():
     path = save_run(results_dir, config, report)
     print(f"Full results saved to {path}")
 
-    
-
-
 if __name__ == "__main__":
+
+    
     main()

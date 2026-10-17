@@ -32,12 +32,35 @@ The project also treats race as a sensitive attribute so that model performance 
 
 ### Week 3
 
-Split the data and standardised it with new scaler. Added an encoder for categorical data. Potentially need to look in to which encoder will be best. Note that once the split is done, the test data is not toucher. Standardisation is local. Note that splitting can be improved to use StratifiedKfold. Right now there is simply an 80/20 split. 
-## Best Model
+Split the data and standardised it with new scaler. Added an encoder for categorical data. Potentially need to look in to which encoder will be best. Note that once the split is done, the test data is not toucher. Standardisation is local. Note that splitting can be improved to use StratifiedKfold. Right now there is simply an 80/20 split.
 
-Best model is the one with the cleaned dataset
+## Week 6
 
-# Baseline Predictive Pipeline -- ETAI
+### Feature Engineering: OFF
+
+| Model                 | Configured CV accuracy, mean ± std | Mean gap¹ | Tuned nested-CV accuracy, mean ± std | Mean gap¹ | Final best-trial tuning score² |
+| --------------------- | ---------------------------------: | --------: | -----------------------------------: | --------: | -----------------------------: |
+| Logistic regression   |                      0.674 ± 0.012 |    +0.002 |                        0.677 ± 0.014 |    +0.001 |                          0.678 |
+| Decision tree         |                      0.675 ± 0.014 |    +0.008 |                        0.677 ± 0.013 |    +0.006 |                          0.679 |
+| Random forest         |                      0.677 ± 0.019 |    +0.034 |                    **0.683 ± 0.017** |    +0.008 |                          0.684 |
+| Oblique random forest |                      0.643 ± 0.012 |    +0.118 |                        0.682 ± 0.013 |    +0.009 |                          0.685 |
+| AdaBoost              |                      0.676 ± 0.012 |    +0.006 |                        0.682 ± 0.015 |    +0.007 |                          0.686 |
+
+### Feature Engineering: ON
+
+| Model                 | Configured CV accuracy, mean ± std | Mean gap¹ | Tuned nested-CV accuracy, mean ± std | Mean gap¹ | Final best-trial tuning score² |
+| --------------------- | ---------------------------------: | --------: | -----------------------------------: | --------: | -----------------------------: |
+| Logistic regression   |                      0.675 ± 0.011 |    +0.001 |                    **0.677 ± 0.011** |    +0.001 |                          0.680 |
+| Decision tree         |                      0.669 ± 0.006 |    +0.016 |                        0.664 ± 0.018 |    +0.017 |                          0.673 |
+| Random forest         |                      0.673 ± 0.010 |    +0.050 |                        0.674 ± 0.008 |    +0.018 |                          0.679 |
+| Oblique random forest |                      0.639 ± 0.011 |    +0.142 |                        0.675 ± 0.010 |    +0.015 |                          0.680 |
+| AdaBoost              |                      0.674 ± 0.007 |    +0.005 |                        0.674 ± 0.009 |    +0.010 |                          0.679 |
+
+### Model Selection
+
+It is a hard choice as models are pretty close. Provisionally, I choose Random Forest withou Engineered Features as it showcases the highst outer nested CV accuracy of 0.683 ± 0.017. Its lead over AdaBoost and the oblique random forest howver is only 0.001 which is much smaller than the fold-to-fold variability. The selected forest uses depth 7 and a minimum leaf size of 61, restricting individual-tree complexity while averaging reduces variance
+
+Baseline Predictive Pipeline -- ETAI
 
 This is the **starting point** for your semester project: a small but _complete_ predictive pipeline -- every piece a real project needs (entry point, config, data loading, preprocessing, model, evaluation), just kept as simple as possible for now.
 

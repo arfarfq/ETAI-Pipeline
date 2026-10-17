@@ -56,7 +56,32 @@ def add_missingness_indicators(df: pd.DataFrame, mnar_indicator_sources: list) -
             out[f"{col}_was_missing"] = out[col].isna().astype(int)
     return out
 
+def add_engineered_features(df: pd.DataFrame) -> pd.DataFrame:
+    out = df.copy()
 
+    out["priors_per_adult_year"] = out["priors_count"] / (out["age"] - 17).clip(lower=1)   # NaN stays NaN -> imputed later
+
+    juvenile_cols = [
+        "juv_fel_count",
+        "juv_misd_count",
+        "juv_other_count",
+    ]
+
+    out["total_juv_count"] = out[juvenile_cols].sum(
+        axis=1, min_count=1
+    )
+
+    # 3. Interactions between age and prior history
+    out["age_x_priors"] = (
+        out["age"] * out["priors_count"]
+    )
+
+    # 4. Interaction between adult and juvenile history
+    out["priors_x_juvenile"] = (
+        out["priors_count"] * out["total_juv_count"]
+    )
+
+    return out
 
 def build_preprocessor(preprocessing_config: dict) -> ColumnTransformer:
     """
@@ -67,9 +92,18 @@ def build_preprocessor(preprocessing_config: dict) -> ColumnTransformer:
     training part of each CV fold only, because this object is placed *inside* the
     model's sklearn Pipeline (see main.py).
     """
+    numeric_features = preprocessing_config["preprocessing"]["numeric_features"].copy()
+    if preprocessing_config["engineered_features"]:
+        numeric_features.extend(
+            preprocessing_config["diagnostics"]["engineered_numeric_features"]
+        )
+        
+
+    preprocessing_config = preprocessing_config["preprocessing"]
+
     encoder_name = preprocessing_config["encoder"]
     scaler_name = preprocessing_config["scaler"]
-    numeric_features = preprocessing_config["numeric_features"]
+    numeric_features = numeric_features
     categorical_features = preprocessing_config["categorical_features"]
     mnar_indicator_sources = preprocessing_config.get("mnar_indicator_sources", [])
     imputation = preprocessing_config.get("imputation", {})
