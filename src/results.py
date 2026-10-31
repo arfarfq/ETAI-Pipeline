@@ -5,30 +5,33 @@ Printing to the terminal is fine while you're watching it happen, but it's gone 
 """
 import os
 from datetime import datetime
+import pandas as pd
+
+import yaml
 
 
-def save_run(results_dir: str, config: dict, report_text: str) -> str:
-    """
-    Writes one run's full report to a timestamped .txt file inside
-    `results_dir` (created automatically if it doesn't exist yet) and
-    returns the path that was written.
-    """
+def save_run(results_dir: str, run: str, config: dict, report_text: str) -> str:
     os.makedirs(results_dir, exist_ok=True)
-
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    model = config["model"]["type"]
-    path = os.path.join(results_dir, f"Model_{model}_{timestamp}.txt")
-
+    model_type = config["model"]["type"]
+    path = os.path.join(results_dir, f"Model_{model_type}_{run}.txt")
     header = (
-        f"Run: {timestamp}\n"
-        f"Model: {config['model']['type']}  params={config['model']['params']}\n"
-        f"Engineered Features: {'On' if config['engineered_features'] else 'Off'}\n"
-        f"Test size: {config['split']['test_size']}  "
-        f"random_state: {config['split']['random_state']}\n"
+        f"Run: {run}\n"
+        f"Model: {model_type}\n"
+        f"Engineered features: {config['engineered_features']}\n"
+        f"Test size: {config['test_set']['size']}  "
+        f"random_state: {config['test_set']['random_state']}\n"
+        "Configuration:\n"
+        + yaml.safe_dump(config, sort_keys=False)
         + "=" * 60 + "\n\n"
     )
-
-    with open(path, "w") as f:
-        f.write(header + report_text)
-
+    with open(path, "w", encoding="utf-8") as handle:
+        handle.write(header + report_text)
     return path
+
+def save_scores(path: str, row: dict) -> pd.DataFrame:
+    """Appends one run to the CSV at `path` (created if needed) and returns all runs."""
+    runs = pd.read_csv(path, dtype={"run": str}) if os.path.exists(path) else pd.DataFrame()
+    runs = pd.concat([runs, pd.DataFrame([row])], ignore_index=True)
+    os.makedirs(os.path.dirname(path) or ".", exist_ok=True)
+    runs.to_csv(path, index=False)
+    return runs
