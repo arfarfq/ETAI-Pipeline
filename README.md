@@ -72,6 +72,22 @@ It has some **deliberately weak spots**. Part of your work this
 semester is finding them and making them better -- see the pipeline progress table below, which tracks what changes and why as the weeks
 go on.
 
+## Week 7
+
+I choose ROC AUC because it measures how well the model distinguishes the two classes across classification thresholds. The dataset is reasonably balanced, making it a suitable metric for comparing models. I can then select a model based on the threshold that bests optimises FP and FN tradeoffs.
+
+| run             | model                 | tuned | encoder | scaler | roc_auc |   std | untuned | floor |
+| --------------- | --------------------- | ----- | ------- | ------ | ------: | ----: | ------: | ----: |
+| 20261031_164936 | gradient_boost        | True  | target  | robust |   0.728 | 0.015 |   0.727 | 0.500 |
+| 20261031_161127 | oblique_random_forest | True  | target  | robust |   0.726 | 0.014 |   0.684 | 0.500 |
+| 20261031_161853 | adaboost              | True  | target  | robust |   0.726 | 0.013 |   0.723 | 0.500 |
+| 20261031_164345 | random_forest         | True  | target  | robust |   0.725 | 0.016 |   0.723 | 0.500 |
+| 20261031_164029 | logistic_regression   | True  | target  | robust |   0.718 | 0.013 |   0.719 | 0.500 |
+| 20261031_164147 | logistic_regression   | True  | target  | robust |   0.718 | 0.014 |   0.719 | 0.500 |
+| 20261031_164314 | decision_tree         | True  | target  | robust |   0.714 | 0.011 |   0.713 | 0.500 |
+
+Best model for now using ROC AUC is gradient boosting.
+
 ## Project structure
 
 ```
