@@ -88,6 +88,22 @@ I choose ROC AUC because it measures how well the model distinguishes the two cl
 
 Best model for now using ROC AUC is gradient boosting.
 
+## Week 8
+
+| run             | model                 | tuned | feature_selection | encoder | scaler | roc_auc |   std | untuned | floor |
+| --------------- | --------------------- | ----- | ----------------- | ------- | ------ | ------: | ----: | ------: | ----: |
+| 20261031_164936 | gradient_boost        | True  | NaN               | target  | robust |   0.728 | 0.015 |   0.727 | 0.500 |
+| 20261107_201349 | xgboost               | True  | off               | target  | robust |   0.727 | 0.012 |   0.723 | 0.500 |
+| 20261031_161127 | oblique_random_forest | True  | NaN               | target  | robust |   0.726 | 0.014 |   0.684 | 0.500 |
+| 20261031_161853 | adaboost              | True  | NaN               | target  | robust |   0.726 | 0.013 |   0.723 | 0.500 |
+| 20261107_201505 | xgboost               | True  | vote(min_votes=1) | target  | robust |   0.725 | 0.012 |   0.720 | 0.500 |
+| 20261031_164345 | random_forest         | True  | NaN               | target  | robust |   0.725 | 0.016 |   0.723 | 0.500 |
+| 20261031_164029 | logistic_regression   | True  | NaN               | target  | robust |   0.718 | 0.013 |   0.719 | 0.500 |
+| 20261031_164147 | logistic_regression   | True  | NaN               | target  | robust |   0.718 | 0.014 |   0.719 | 0.500 |
+| 20261031_164314 | decision_tree         | True  | NaN               | target  | robust |   0.714 | 0.011 |   0.713 | 0.500 |
+
+The XGboost that was tuned achieved a nested-CV ROC-AUC of 0.727 ± 0.012 without feature selection and 0.725 ± 0.012 with feature selection. The paired test had an absolute mean difference of 0.00178 and a p-value of 0.294. This provides no significant statistical evidence of a performance difference. The final selector has chose min_votes=1 and retained numeric_age, numeric_priors_count, categorical_age_cat. Additionaly, I would provisionally keep feature selection off because it added fitting complexity without demonstrating a improvement, although the test does not prove that the two approaches are equivalent.
+
 ## Project structure
 
 ```
@@ -114,6 +130,7 @@ This table is updated after each practical class, so you can always see what cha
 | Week | Practical class focus            | Added to the pipeline                                                                                                                                                                                                                                                                                                                                                                                                                                        |
 | ---- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 2    | Introduction & baseline pipeline | Initial version: project structure, a single naive train/test split (no cross-validation), minimal preprocessing (drop rows with missing values, one-hot encode categoricals), logistic regression baseline, a first (deliberately simple) fairness check comparing our model's and COMPAS's own false-positive rate by race, train-vs-test accuracy reporting (to start spotting overfitting), and each run's full report saved automatically to `results/` |
+| 8    | XGBoost and feature selection    | Added XGBoost, voting feature selection inside the pipeline, joint nested-CV tuning, caching, selected-feature reporting, and a corrected paired comparison with and without selection.                                                                                                                                                                                                                                                                      |
 
 ## Environment setup
 

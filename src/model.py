@@ -7,6 +7,40 @@ from sklearn.pipeline import Pipeline
 from sklearn.ensemble import BaggingClassifier
 from sklearn.random_projection import SparseRandomProjection
 from sklearn.naive_bayes import GaussianNB
+from xgboost import XGBClassifier
+import numpy as np
+from sklearn.base import BaseEstimator
+from sklearn.feature_selection import SelectorMixin
+from src.preprocessing import build_preprocessor
+
+class VoteSelector(SelectorMixin, BaseEstimator):
+    """
+    Keeps the features chosen by at least `min_votes` of three models, fitted on the training
+    rows only: a random forest and gradient boosting vote for features with above-average
+    importance, an L1-penalised logistic regression for features it doesn't shrink to zero.
+    """
+
+    def __init__(self, min_votes: int = 2, random_state=None):
+        self.min_votes = min_votes
+        self.random_state = random_state
+
+    def fit(self, X, y):
+        forest = RandomForestClassifier(n_estimators=200, min_samples_leaf=20, random_state=self.random_state, n_jobs=-1).fit(X, y)
+        booster = GradientBoostingClassifier(random_state=self.random_state).fit(X, y)
+        lasso = LogisticRegression(penalty="l1", C=0.01, solver="liblinear").fit(X, y)
+        self.votes_ = ((forest.feature_importances_ > forest.feature_importances_.mean()).astype(int)
+                       + (booster.feature_importances_ > booster.feature_importances_.mean())
+                       + (np.abs(lasso.coef_[0]) > 1e-8))
+        self.support_ = self.votes_ >= self.min_votes
+        self.n_features_in_ = X.shape[1]
+        if not self.support_.any():
+            self.support_[np.argmax(self.votes_)] = True
+        return self
+
+    def _get_support_mask(self):
+        return self.support_
+        
+
 
 def adaboost(max_depth: int = 1, **params):
     """
@@ -41,7 +75,17 @@ _MODELS = {
     "naive_bayes": GaussianNB,
     "hist_gradient_boost": HistGradientBoostingClassifier,
     "dummy": DummyClassifier,
+    "xgboost": XGBClassifier,
 }
+
+def build_pipeline(config, model_config, selection_config=None, memory=None):
+    steps = [("prep", build_preprocessor(config))]
+    if selection_config and selection_config.get("enabled", False):
+        steps.append(("select", VoteSelector(
+            min_votes=selection_config.get("min_votes", 2),
+            random_state=selection_config.get("random_state", 42))))
+    steps.append(("model", build_model(model_config)))
+    return Pipeline(steps, memory=memory)
 
 
 def build_model(model_config: dict):

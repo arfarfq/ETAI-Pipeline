@@ -20,6 +20,7 @@ def save_run(results_dir: str, run: str, config: dict, report_text: str) -> str:
         f"Engineered features: {config['engineered_features']}\n"
         f"Test size: {config['test_set']['size']}  "
         f"random_state: {config['test_set']['random_state']}\n"
+        f"Feature selection: {config.get('feature_selection', {'enabled': False})}\n"
         "Configuration:\n"
         + yaml.safe_dump(config, sort_keys=False)
         + "=" * 60 + "\n\n"
