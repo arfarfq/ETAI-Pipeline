@@ -1,0 +1,491 @@
+Run: 20261114_200557
+Model: xgboost
+Engineered features: False
+Test size: 0.2  random_state: 42
+Feature selection: {'enabled': True, 'min_votes': 2, 'random_state': 42, 'search_space': {'select__min_votes': {'type': 'int', 'low': 1, 'high': 3}}}
+Configuration:
+data:
+  path: data/compas_two_year_recidivism.csv
+  target: two_year_recid
+  sensitive_attr: race
+  drop_columns:
+  - id
+  - decile_score
+  - score_text
+split:
+  test_size: 0.2
+  random_state: 42
+engineered_features: false
+feature_selection:
+  enabled: true
+  min_votes: 2
+  random_state: 42
+  search_space:
+    select__min_votes:
+      type: int
+      low: 1
+      high: 3
+model:
+  type: xgboost
+  params:
+    decision_tree:
+      max_depth: 5s
+      min_samples_leaf: 10
+      criterion: gini
+    random_forest:
+      n_estimators: 200
+      max_depth: 10
+    adaboost:
+      n_estimators: 200
+      learning_rate: 1.0
+      random_state: 42
+    logistic_regression:
+      C: 1.0
+      max_iter: 1000
+    oblique_random_forest:
+      n_estimators: 200
+      n_components: 10
+      random_state: 42
+      n_jobs: -1
+    gradient_boost:
+      random_state: 42
+    naive_bayes: {}
+    hist_gradient_boost:
+      random_state: 42
+      class_weight: balanced
+    xgboost:
+      n_estimators: 300
+      learning_rate: 0.05
+      max_depth: 4
+      random_state: 42
+      n_jobs: -1
+      tree_method: hist
+output:
+  results_dir: results
+diagnostics:
+  id_column: id
+  numeric_features:
+  - age
+  - juv_fel_count
+  - juv_misd_count
+  - juv_other_count
+  - priors_count
+  engineered_numeric_features:
+  - total_juv_count
+  - age_x_priors
+  - priors_per_adult_year
+  candidate_predictors:
+  - sex
+  - race
+  - age_cat
+  - c_charge_degree
+  - score_text
+  missingness_verdicts:
+    age: MCAR
+    juv_fel_count: MCAR
+    priors_count: MNAR
+    c_charge_degree: MNAR
+    race: MCAR
+    sex: MCAR
+  domain_rules:
+    age:
+      min: 18
+      max: 100
+    decile_score:
+      min: 1
+      max: 10
+    juv_fel_count:
+      min: 0
+    priors_count:
+      min: 0
+      max: 60
+  placeholder_tokens:
+  - ''
+  - '-'
+  - '?'
+  - N/A
+  - NA
+  - n/a
+  - na
+  canonical_maps:
+    sex:
+      male: Male
+      female: Female
+    race:
+      african-american: African-American
+      african american: African-American
+      caucasian: Caucasian
+      hispanic: Hispanic
+      other: Other
+      asian: Asian
+      native american: Native American
+    c_charge_degree:
+      f: F
+      felony: F
+      m: M
+      misdemeanor: M
+    score_text:
+      low: Low
+      medium: Medium
+      high: High
+  columns_to_drop:
+  - prior_offenses
+  - age_in_months
+  - juvenile_total
+  - id
+  duplicate_check:
+    exact_row_duplicates: 72
+    repeated_ids: 72
+test_set:
+  size: 0.2
+  random_state: 42
+preprocessing:
+  encoder: target
+  scaler: robust
+  numeric_features:
+  - age
+  - juv_fel_count
+  - juv_misd_count
+  - juv_other_count
+  - priors_count
+  engineered_numeric_features:
+  - total_juv_count
+  - age_x_priors
+  - priors_per_adult_year
+  categorical_features:
+  - sex
+  - age_cat
+  - c_charge_degree
+  mnar_indicator_sources:
+  - priors_count
+  - c_charge_degree
+  random_state: 42
+  imputation:
+    numeric_strategy: median
+    categorical_strategy: most_frequent
+cv:
+  n_splits: 5
+  shuffle: true
+  random_state: 42
+  metrics:
+  - accuracy
+  - balanced_accuracy
+  - precision
+  - recall
+  - f1
+  - fbeta_2
+  - roc_auc
+  - average_precision
+  selection_metric: roc_auc
+  n_jobs: 1
+tuning:
+  enabled: true
+  n_trials: 30
+  n_splits: 5
+  random_state: 42
+  search_spaces:
+    decision_tree:
+      model__max_depth:
+        type: int
+        low: 1
+        high: 20
+      model__min_samples_leaf:
+        type: int
+        low: 1
+        high: 200
+        log: true
+      model__criterion:
+        type: categorical
+        choices:
+        - gini
+        - entropy
+    random_forest:
+      model__max_depth:
+        type: int
+        low: 2
+        high: 30
+      model__min_samples_split:
+        type: int
+        low: 2
+        high: 50
+      model__min_samples_leaf:
+        type: int
+        low: 1
+        high: 200
+        log: true
+      model__max_features:
+        type: categorical
+        choices:
+        - sqrt
+        - 0.5
+        - 1.0
+      model__criterion:
+        type: categorical
+        choices:
+        - gini
+        - entropy
+    adaboost:
+      model__n_estimators:
+        type: int
+        low: 25
+        high: 400
+        log: true
+      model__learning_rate:
+        type: float
+        low: 0.01
+        high: 1.0
+        log: true
+      model__estimator__max_depth:
+        type: int
+        low: 1
+        high: 8
+    logistic_regression:
+      model__C:
+        type: float
+        low: 0.0001
+        high: 100.0
+        log: true
+      model__l1_ratio:
+        type: categorical
+        choices:
+        - 1.0
+        - 0.0
+      model__solver:
+        type: categorical
+        choices:
+        - liblinear
+        - saga
+      model__class_weight:
+        type: categorical
+        choices:
+        - null
+        - balanced
+      model__fit_intercept:
+        type: categorical
+        choices:
+        - true
+        - false
+    oblique_random_forest:
+      model__estimator__tree__max_depth:
+        type: int
+        low: 2
+        high: 30
+      model__estimator__tree__min_samples_leaf:
+        type: int
+        low: 1
+        high: 200
+        log: true
+      model__estimator__project__n_components:
+        type: int
+        low: 3
+        high: 10
+    gradient_boost:
+      model__n_estimators:
+        type: int
+        low: 25
+        high: 500
+        log: true
+      model__learning_rate:
+        type: float
+        low: 0.01
+        high: 0.5
+        log: true
+      model__max_depth:
+        type: int
+        low: 1
+        high: 6
+      model__min_samples_leaf:
+        type: int
+        low: 1
+        high: 200
+        log: true
+      model__subsample:
+        type: float
+        low: 0.5
+        high: 1.0
+    hist_gradient_boost:
+      model__max_iter:
+        type: int
+        low: 25
+        high: 500
+        log: true
+      model__learning_rate:
+        type: float
+        low: 0.01
+        high: 0.5
+        log: true
+      model__max_leaf_nodes:
+        type: int
+        low: 2
+        high: 63
+        log: true
+      model__min_samples_leaf:
+        type: int
+        low: 5
+        high: 200
+        log: true
+      model__l2_regularization:
+        type: float
+        low: 1.0e-06
+        high: 10.0
+        log: true
+    naive_bayes: {}
+    xgboost:
+      model__n_estimators:
+        type: int
+        low: 50
+        high: 600
+        log: true
+      model__learning_rate:
+        type: float
+        low: 0.01
+        high: 0.3
+        log: true
+      model__max_depth:
+        type: int
+        low: 1
+        high: 8
+      model__min_child_weight:
+        type: float
+        low: 1.0
+        high: 50.0
+        log: true
+      model__subsample:
+        type: float
+        low: 0.5
+        high: 1.0
+      model__colsample_bytree:
+        type: float
+        low: 0.5
+        high: 1.0
+      model__reg_lambda:
+        type: float
+        low: 0.01
+        high: 10.0
+        log: true
+      model__reg_alpha:
+        type: float
+        low: 0.001
+        high: 10.0
+        log: true
+      model__gamma:
+        type: float
+        low: 0.0
+        high: 5.0
+============================================================
+
+Hyperparameters from config.yaml: {'decision_tree': {'max_depth': '5s', 'min_samples_leaf': 10, 'criterion': 'gini'}, 'random_forest': {'n_estimators': 200, 'max_depth': 10}, 'adaboost': {'n_estimators': 200, 'learning_rate': 1.0, 'random_state': 42}, 'logistic_regression': {'C': 1.0, 'max_iter': 1000}, 'oblique_random_forest': {'n_estimators': 200, 'n_components': 10, 'random_state': 42, 'n_jobs': -1}, 'gradient_boost': {'random_state': 42}, 'naive_bayes': {}, 'hist_gradient_boost': {'random_state': 42, 'class_weight': 'balanced'}, 'xgboost': {'n_estimators': 300, 'learning_rate': 0.05, 'max_depth': 4, 'random_state': 42, 'n_jobs': -1, 'tree_method': 'hist'}}
+
+Cross-validation (5 folds; selection metric: roc_auc)
+
+ fold  train  validation   gap  accuracy  balanced_accuracy  precision  recall    f1  fbeta_2  roc_auc  average_precision
+    1  0.749       0.718 0.031     0.667              0.654      0.665   0.526 0.587    0.549    0.718              0.676
+    2  0.749       0.695 0.054     0.656              0.647      0.636   0.554 0.592    0.568    0.695              0.654
+    3  0.747       0.727 0.021     0.687              0.676      0.687   0.562 0.618    0.583    0.727              0.699
+    4  0.746       0.725 0.021     0.676              0.662      0.683   0.523 0.593    0.549    0.725              0.713
+    5  0.747       0.733 0.014     0.679              0.667      0.682   0.540 0.603    0.564    0.733              0.692
+
+train                mean = 0.748 std = 0.001
+validation           mean = 0.720 std = 0.015
+gap                  mean = 0.028 std = 0.016
+accuracy             mean = 0.673 std = 0.012
+balanced_accuracy    mean = 0.661 std = 0.011
+precision            mean = 0.671 std = 0.021
+recall               mean = 0.541 std = 0.017
+f1                   mean = 0.599 std = 0.012
+fbeta_2              mean = 0.563 std = 0.014
+roc_auc              mean = 0.720 std = 0.015
+average_precision    mean = 0.687 std = 0.023
+
+No-model floor (dummy, same folds): roc_auc = 0.500
+
+Nested cross-validation (the tuning procedure, estimated honestly) (5 folds; selection metric: roc_auc)
+
+ fold  train  validation    gap  accuracy  balanced_accuracy  precision  recall    f1  fbeta_2  roc_auc  average_precision  inner_best  model__n_estimators  model__learning_rate  model__max_depth  model__min_child_weight  model__subsample  model__colsample_bytree  model__reg_lambda  model__reg_alpha  model__gamma  select__min_votes
+    1  0.729       0.723  0.006     0.673              0.661      0.671   0.539 0.598    0.561    0.723              0.672       0.726                  427                 0.083                 3                    1.282             0.655                    0.663              1.545             0.355         4.436                  2
+    2  0.736       0.703  0.033     0.656              0.648      0.633   0.563 0.596    0.576    0.703              0.662       0.731                  434                 0.124                 5                    1.761             0.705                    0.584              2.540             0.122         3.974                  2
+    3  0.729       0.732 -0.003     0.685              0.677      0.665   0.604 0.633    0.615    0.732              0.703       0.723                  474                 0.037                 2                    2.799             0.690                    0.855              5.851             0.019         2.305                  2
+    4  0.732       0.733 -0.001     0.692              0.678      0.711   0.535 0.610    0.563    0.733              0.722       0.722                  352                 0.088                 3                    1.488             0.853                    0.893              0.016             0.003         2.664                  1
+    5  0.730       0.733 -0.003     0.694              0.683      0.696   0.569 0.626    0.591    0.733              0.689       0.723                  334                 0.107                 1                    1.331             0.712                    0.922              0.758             0.181         1.103                  2
+
+train                mean = 0.731 std = 0.003
+validation           mean = 0.725 std = 0.013
+gap                  mean = 0.006 std = 0.016
+accuracy             mean = 0.680 std = 0.016
+balanced_accuracy    mean = 0.669 std = 0.015
+precision            mean = 0.675 std = 0.030
+recall               mean = 0.562 std = 0.028
+f1                   mean = 0.613 std = 0.017
+fbeta_2              mean = 0.581 std = 0.022
+roc_auc              mean = 0.725 std = 0.013
+average_precision    mean = 0.690 std = 0.024
+
+Tuning on the whole development set (30 Optuna trials, metric: roc_auc)
+Best hyperparameters: {'model__n_estimators': 529, 'model__learning_rate': 0.10509839220971633, 'model__max_depth': 1, 'model__min_child_weight': 1.423092022440778, 'model__subsample': 0.794158459742376, 'model__colsample_bytree': 0.811140317747035, 'model__reg_lambda': 0.04337484507171, 'model__reg_alpha': 0.0031588737767955, 'model__gamma': 2.86206390568342, 'select__min_votes': 1}
+Best mean CV score:   0.727  (the maximum over all trials -- optimistic)
+
+Top 5 trials:
+ trial  mean roc_auc  model__colsample_bytree  model__gamma  model__learning_rate  model__max_depth  model__min_child_weight  model__n_estimators  model__reg_alpha  model__reg_lambda  model__subsample  select__min_votes   std
+    20         0.727                    0.811         2.862                 0.105                 1                    1.423                  529             0.003              0.043             0.794                  1 0.013
+    25         0.726                    0.766         2.624                 0.086                 2                    1.918                  560             0.003              0.078             0.841                  1 0.012
+    16         0.726                    0.881         3.826                 0.132                 1                    1.515                  247             0.034              0.104             0.810                  1 0.013
+    29         0.726                    0.792         2.804                 0.112                 2                    1.524                  319             0.004              0.020             0.872                  1 0.013
+    27         0.726                    0.872         4.252                 0.154                 2                    1.227                  423             0.004              0.047             0.776                  1 0.012
+
+Optimism check (nested CV):
+  tuning score inside the outer folds (inner_best) mean = 0.725
+  honest score on the outer folds (validation)     mean = 0.725
+  optimism = +0.000   -> report the honest one
+
+Out-of-fold predictions, development set (threshold 0.5):
+
+        predicted 0  predicted 1
+true 0         2462          708
+true 1         1139         1462
+
+              precision    recall  f1-score   support
+
+           0       0.68      0.78      0.73      3170
+           1       0.67      0.56      0.61      2601
+
+    accuracy                           0.68      5771
+   macro avg       0.68      0.67      0.67      5771
+weighted avg       0.68      0.68      0.68      5771
+
+False positive rate by race (development set, out-of-fold)
+(share of people with true class 0 who were predicted as class 1)
+
+  Our model:
+    African-American     FPR = 0.30  (n=1420)
+    Asian                FPR = 0.10  (n=21)
+    Caucasian            FPR = 0.16  (n=1161)
+    Hispanic             FPR = 0.17  (n=311)
+    Native American      FPR = 0.17  (n=6)
+    Other                FPR = 0.16  (n=185)
+    unknown              FPR = 0.20  (n=66)
+
+  COMPAS's own score:
+    African-American     FPR = 0.45  (n=1420)
+    Asian                FPR = 0.10  (n=21)
+    Caucasian            FPR = 0.23  (n=1161)
+    Hispanic             FPR = 0.23  (n=311)
+    Native American      FPR = 0.17  (n=6)
+    Other                FPR = 0.14  (n=185)
+    unknown              FPR = 0.33  (n=66)
+
+Features kept: numeric__age, numeric__priors_count, categorical__age_cat
+
+Final model: xgboost refit on all 5771 development rows.
+
+Scoreboard:
+            run                 model  tuned feature_selection encoder scaler  roc_auc   std  untuned  floor
+20261031_164936        gradient_boost   True               NaN  target robust    0.728 0.015    0.727  0.500
+20261107_201349               xgboost   True               off  target robust    0.727 0.012    0.723  0.500
+20261031_161127 oblique_random_forest   True               NaN  target robust    0.726 0.014    0.684  0.500
+20261031_161853              adaboost   True               NaN  target robust    0.726 0.013    0.723  0.500
+20261107_201505               xgboost   True vote(min_votes=1)  target robust    0.725 0.012    0.720  0.500
+20261031_164345         random_forest   True               NaN  target robust    0.725 0.016    0.723  0.500
+20261114_200557               xgboost   True vote(min_votes=1)  target robust    0.725 0.013    0.720  0.500
+20261031_164029   logistic_regression   True               NaN  target robust    0.718 0.013    0.719  0.500
+20261031_164147   logistic_regression   True               NaN  target robust    0.718 0.014    0.719  0.500
+20261031_164314         decision_tree   True               NaN  target robust    0.714 0.011    0.713  0.500

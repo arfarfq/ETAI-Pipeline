@@ -1,0 +1,6 @@
+config_path: config_adult.yaml
+development_rows: 4800
+input_path: data/adult_new.csv
+rows: 2000
+run: '20261114_200215'
+threshold: 0.5

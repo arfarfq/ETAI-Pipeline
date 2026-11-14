@@ -111,6 +111,12 @@ def build_preprocessor(preprocessing_config: dict) -> ColumnTransformer:
     scaler_factory = _SCALERS[scaler_name]
     scaler = scaler_factory() if callable(scaler_factory) else scaler_factory
     encoder = _ENCODERS[encoder_name](preprocessing_config.get("random_state"))
+    # Opt-in seeded cross-fitting; existing configs retain their previous behavior.
+    if encoder_name == "target" and "target_cv_random_state" in preprocessing_config:
+        encoder.set_params(cv=StratifiedKFold(
+            n_splits=5, shuffle=True,
+            random_state=preprocessing_config["target_cv_random_state"],
+        ))
 
     numeric_pipeline = Pipeline([
         ("impute", SimpleImputer(strategy=imputation.get("numeric_strategy", "median"))),

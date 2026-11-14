@@ -66,35 +66,37 @@ def oof_classification_report(y_true, oof_proba, threshold: float = 0.5) -> str:
             f"{cm.to_string()}\n\n{classification_report(y_true, y_pred, zero_division=0)}")
 
 
-def fairness_report(y_true, oof_proba, extras: pd.DataFrame, sensitive_attr: str = "race",
-                    threshold: float = 0.5) -> str:
-    """
-    False positive rate (share of people who did not reoffend but were predicted to) per
-    group of `sensitive_attr`, for the model's out-of-fold predictions and for COMPAS's own
-    score (`score_text` other than "Low" counts as predicted to reoffend), on the same rows.
-    Rows with an unknown group are reported as "unknown". A simple check, not a full audit.
-    """
+def fairness_report(y_true, oof_proba, extras: pd.DataFrame,
+                    sensitive_attr: str = "race", threshold: float = 0.5) -> str:
+    """False positive rates by group using development out-of-fold predictions."""
     df = extras.copy()
     df[sensitive_attr] = df[sensitive_attr].astype(object).fillna("unknown")
-    df["y_true"] = pd.Series(y_true).values
-    df["y_pred_model"] = (oof_proba >= threshold).astype(int)
-    df["y_pred_compas"] = (df["score_text"] != "Low").astype(int)
+    df["y_true"] = np.asarray(y_true)
+    df["y_pred_model"] = (np.asarray(oof_proba) >= threshold).astype(int)
+
+    comparisons = [("Our model", "y_pred_model")]
+    if "score_text" in df.columns:
+        df["y_pred_compas"] = (df["score_text"] != "Low").astype(int)
+        comparisons.append(("COMPAS's own score", "y_pred_compas"))
 
     lines = [
         f"False positive rate by {sensitive_attr} (development set, out-of-fold)",
-        "(share of people who did NOT reoffend, but were predicted to)",
+        "(share of people with true class 0 who were predicted as class 1)",
         "",
     ]
-    for label, col in [("Our model", "y_pred_model"), ("COMPAS's own score", "y_pred_compas")]:
+    for label, col in comparisons:
         lines.append(f"  {label}:")
         for group, g in df.groupby(sensitive_attr):
             negatives = g[g["y_true"] == 0]
             if len(negatives) == 0:
                 continue
             fpr = (negatives[col] == 1).mean()
-            lines.append(f"    {group:<20s} FPR = {fpr:.2f}  (n={len(negatives)})")
+            lines.append(
+                f"    {group:<20s} FPR = {fpr:.2f}  (n={len(negatives)})"
+            )
         lines.append("")
     return "\n".join(lines)
+
 
 def build_scorers(metrics: list) -> dict:
     """

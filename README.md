@@ -104,6 +104,30 @@ Best model for now using ROC AUC is gradient boosting.
 
 The XGboost that was tuned achieved a nested-CV ROC-AUC of 0.727 ± 0.012 without feature selection and 0.725 ± 0.012 with feature selection. The paired test had an absolute mean difference of 0.00178 and a p-value of 0.294. This provides no significant statistical evidence of a performance difference. The final selector has chose min_votes=1 and retained numeric_age, numeric_priors_count, categorical_age_cat. Additionaly, I would provisionally keep feature selection off because it added fitting complexity without demonstrating a improvement, although the test does not prove that the two approaches are equivalent.
 
+## Week 9 — Beyond COMPAS (Option A)
+
+The Adult income pipeline runs with `python main.py config_adult.yaml`; default `python main.py` retains COMPAS. It writes 2,000 new-person predictions to [predictions/adult_predictions.csv](predictions/adult_predictions.csv), with the generating run recorded in the adjacent YAML file.
+
+| Run               | Selection         |      Nested ROC-AUC |     Nested accuracy |   Nested class-1 F1 | All targets met? |
+| ----------------- | ----------------- | ------------------: | ------------------: | ------------------: | ---------------- |
+| `20261114_200003` | off               | 0.907420 ± 0.015464 | 0.859375 ± 0.010072 | 0.666548 ± 0.024573 | Yes              |
+| `20261114_200215` | vote(min_votes=1) | 0.908052 ± 0.014292 | 0.856875 ± 0.009009 | 0.672003 ± 0.032232 | Yes              |
+
+I added a parser to the main function so one can select between the two datasets. I removed cononical mapping. I updated the yaml to include the new numerical and catogorical columns. I changed clcean.py as there was a faulty implementation. I changed the fairness report as it assumed score_text existed but this dataset has no COMPAS evalutaion. The audit attribute is sex, which is excluded from model inputs. race is also excluded to avoid directly using either sensitive attribute. ID is retained for output alignment but excluded from model inputs. fnlwgt is excluded because it is a census sampling weight, and redundant education is excluded in favour of ordered education_num.
+
+Cleaning validation found exactly 379, 381 and 86 missing entries in workclass, occupation and native_country, respectively, and no remaining ? category. All 6,000 rows remain after cleaning, including 74 valid 17-year-olds; all 29 occurrences of capital_gain 99999 remain valid. Before selection, target encoding produces 37 inputs: 23 numeric, 12 categorical and 2 missingness indicators.
+
+The final refit's selected threshold is vote(min_votes=1). Its retained features are:
+
+age
+education_num
+capital_gain
+capital_loss
+hours_per_week
+marital_status
+occupation
+relationship
+
 ## Project structure
 
 ```
@@ -131,6 +155,7 @@ This table is updated after each practical class, so you can always see what cha
 | ---- | -------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
 | 2    | Introduction & baseline pipeline | Initial version: project structure, a single naive train/test split (no cross-validation), minimal preprocessing (drop rows with missing values, one-hot encode categoricals), logistic regression baseline, a first (deliberately simple) fairness check comparing our model's and COMPAS's own false-positive rate by race, train-vs-test accuracy reporting (to start spotting overfitting), and each run's full report saved automatically to `results/` |
 | 8    | XGBoost and feature selection    | Added XGBoost, voting feature selection inside the pipeline, joint nested-CV tuning, caching, selected-feature reporting, and a corrected paired comparison with and without selection.                                                                                                                                                                                                                                                                      |
+| 9    | Beyond COMPAS — Option A         | Added Adult configuration, generic cleaning/fairness, tuned feature selection, 2,000-row inference export and validation. See updated_readme.md.                                                                                                                                                                                                                                                                                                             |
 
 ## Environment setup
 

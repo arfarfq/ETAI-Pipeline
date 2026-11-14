@@ -1,0 +1,288 @@
+# Baseline pipeline configuration.
+# Nothing here is hardcoded in the source files below -- everything tunable lives in this one place.
+
+data:
+  path: "data/adult_train.csv"
+  target: "income_over_50k"
+  sensitive_attr: "sex"
+  drop_columns: ["id", "fnlwgt", "education", "race"]
+
+split:
+  test_size: 0.2
+  random_state: 42
+
+engineered_features: False
+
+feature_selection:
+  enabled: true
+  min_votes: 2 # 1 (keep almost all) .. 3 (keep only unanimous)
+  random_state: 42
+  search_space: # tuned together with the model when tuning is on
+    select__min_votes: { type: int, low: 1, high: 3 }
+
+model:
+  type: "xgboost"
+  # "adaboost", "logistic_regression", "decision_tree", "random_forest", "oblique_random_forest", "gradient_boost", "xgboost"
+
+  params:
+    decision_tree:
+      max_depth: 5
+      min_samples_leaf: 10
+      criterion: "gini"
+
+    random_forest:
+      n_estimators: 200
+      max_depth: 10
+
+    adaboost:
+      n_estimators: 200
+      learning_rate: 1.0
+      random_state: 42
+
+    logistic_regression:
+      C: 1.0
+      max_iter: 1000
+
+    oblique_random_forest:
+      n_estimators: 200
+      n_components: 10
+      random_state: 42
+      n_jobs: -1
+
+    gradient_boost:
+      random_state: 42
+
+    naive_bayes: {}
+
+    hist_gradient_boost:
+      random_state: 42
+      class_weight: "balanced"
+
+    xgboost:
+      n_estimators: 300
+      learning_rate: 0.05
+      max_depth: 4
+      random_state: 42
+      n_jobs: -1
+      tree_method: hist
+
+output:
+  results_dir: "results/adult"
+  scoreboard: "results/adult/runs.csv"
+
+inference:
+  enabled: true
+  path: "data/adult_new.csv"
+  id_column: "id"
+  output_path: "predictions/adult_predictions.csv"
+
+diagnostics:
+  id_column: "id"
+
+  numeric_features:
+    [
+      "id",
+      "age",
+      "fnlwgt",
+      "education_num",
+      "capital_gain",
+      "capital_loss",
+      "hours_per_week",
+      "v01",
+      "v02",
+      "v03",
+      "v04",
+      "v05",
+      "v06",
+      "v07",
+      "v08",
+      "v09",
+      "v10",
+      "v11",
+      "v12",
+      "v13",
+      "v14",
+      "v15",
+      "v16",
+      "v17",
+      "v18",
+      "income_over_50k",
+    ]
+
+  candidate_predictors: None
+
+  missingness_verdicts: # CHeck this
+    - workclass
+    - occupation
+
+  domain_rules:
+    age:
+      min: 17
+      max: 90
+
+    hours_per_week:
+      min: 1
+      max: 99
+
+    capital_gain:
+      min: 0
+
+    capital_loss:
+      min: 0
+
+  placeholder_tokens:
+    - "?"
+
+  canonical_maps: {}
+
+  columns_to_drop: []
+
+  duplicate_check:
+    exact_row_duplicates: 0
+    repeated_ids: 0
+
+test_set:
+  size: 0.2
+  random_state: 42
+
+preprocessing:
+  # options: "onehot" | "ordinal" | "count" | "target"
+  encoder: "target" # compact (1 column per feature) and informative; sklearn's version cross-fits, so no leak
+  # options: "none" | "standard" | "minmax" | "robust"
+  scaler: "robust" # median/IQR: the few extreme counts (e.g. priors_count) don't set the scale for everyone
+  numeric_features:
+    - age
+    - education_num
+    - capital_gain
+    - capital_loss
+    - hours_per_week
+    - v01
+    - v02
+    - v03
+    - v04
+    - v05
+    - v06
+    - v07
+    - v08
+    - v09
+    - v10
+    - v11
+    - v12
+    - v13
+    - v14
+    - v15
+    - v16
+    - v17
+    - v18
+
+  engineered_numeric_features: []
+  categorical_features:
+    [
+      "workclass",
+      "marital_status",
+      "occupation",
+      "relationship",
+      "native_country",
+      "v19",
+      "v20",
+      "v21",
+      "v22",
+      "v23",
+      "v24",
+      "v25",
+    ]
+  # MNAR-diagnosed columns (see diagnostics above / the EDA notebook's mechanism test) get an
+  # extra "_was_missing" flag alongside their imputed value, so the model can still see the
+  # pattern even though the fill itself is just a median/mode
+  mnar_indicator_sources: ["workclass", "occupation"]
+
+  # seed for the target encoder's internal cross-fitting (week 4: sklearn's TargetEncoder)
+  random_state: 42
+  target_cv_random_state: 42 # seeded internal cross-fitting (scikit-learn >= 1.9)
+  imputation:
+    numeric_strategy: "median" # applies to age, juv_fel_count, juv_misd_count, juv_other_count, priors_count
+    categorical_strategy: "most_frequent" # applies to sex, age_cat, c_charge_degree
+
+cv:
+  n_splits: 5
+  shuffle: true
+  random_state: 42
+  metrics:
+    [
+      "accuracy",
+      "balanced_accuracy",
+      "precision",
+      "recall",
+      "f1",
+      "fbeta_2",
+      "roc_auc",
+      "average_precision",
+    ]
+  selection_metric: "roc_auc"
+  n_jobs: 1 # folds fitted in parallel; -1 = all cores (only pays off for slow models, e.g. random forest)
+
+tuning:
+  enabled: true
+  n_trials: 30
+  n_splits: 5 # folds that score each candidate
+  random_state: 42 # seeds the sampler and those folds
+  # Keys are Pipeline parameter names. Types: int / float (low, high, log) or categorical (choices).
+  search_spaces:
+    decision_tree:
+      model__max_depth: { type: int, low: 1, high: 20 }
+      model__min_samples_leaf: { type: int, low: 1, high: 200, log: true }
+      model__criterion: { type: categorical, choices: ["gini", "entropy"] }
+
+    random_forest:
+      model__max_depth: { type: int, low: 2, high: 30 }
+      model__min_samples_split: { type: int, low: 2, high: 50 }
+      model__min_samples_leaf: { type: int, low: 1, high: 200, log: true }
+      model__max_features: { type: categorical, choices: ["sqrt", 0.5, 1.0] }
+      model__criterion: { type: categorical, choices: ["gini", "entropy"] }
+
+    adaboost:
+      model__n_estimators: { type: int, low: 25, high: 400, log: True }
+      model__learning_rate: { type: float, low: 0.01, high: 1.0, log: true }
+      model__estimator__max_depth: { type: int, low: 1, high: 8 }
+      #model__estimator__min_samples_leaf: { type: int, low: 1, high: 50, log: true }
+
+    logistic_regression:
+      model__C: { type: float, low: 0.0001, high: 100.0, log: true }
+      model__l1_ratio: { type: categorical, choices: [1.0, 0.0] }
+      model__solver: { type: categorical, choices: ["liblinear", "saga"] }
+      model__class_weight: { type: categorical, choices: [null, "balanced"] }
+      model__fit_intercept: { type: categorical, choices: [true, false] }
+
+    oblique_random_forest:
+      model__estimator__tree__max_depth: { type: int, low: 2, high: 30 }
+      model__estimator__tree__min_samples_leaf:
+        { type: int, low: 1, high: 200, log: true }
+      model__estimator__project__n_components: { type: int, low: 3, high: 10 }
+
+    gradient_boost:
+      model__n_estimators: { type: int, low: 25, high: 500, log: true }
+      model__learning_rate: { type: float, low: 0.01, high: 0.5, log: true }
+      model__max_depth: { type: int, low: 1, high: 6 }
+      model__min_samples_leaf: { type: int, low: 1, high: 200, log: true }
+      model__subsample: { type: float, low: 0.5, high: 1.0 }
+
+    hist_gradient_boost:
+      model__max_iter: { type: int, low: 25, high: 500, log: true }
+      model__learning_rate: { type: float, low: 0.01, high: 0.5, log: true }
+      model__max_leaf_nodes: { type: int, low: 2, high: 63, log: true }
+      model__min_samples_leaf: { type: int, low: 5, high: 200, log: true }
+      model__l2_regularization:
+        { type: float, low: 0.000001, high: 10.0, log: true }
+
+    naive_bayes: {}
+
+    xgboost:
+      model__n_estimators: { type: int, low: 50, high: 600, log: true }
+      model__learning_rate: { type: float, low: 0.01, high: 0.3, log: true }
+      model__max_depth: { type: int, low: 1, high: 8 }
+      model__min_child_weight: { type: float, low: 1.0, high: 50.0, log: true }
+      model__subsample: { type: float, low: 0.5, high: 1.0 }
+      model__colsample_bytree: { type: float, low: 0.5, high: 1.0 }
+      model__reg_lambda: { type: float, low: 0.01, high: 10.0, log: true }
+      model__reg_alpha: { type: float, low: 0.001, high: 10.0, log: true }
+      model__gamma: { type: float, low: 0.0, high: 5.0 }

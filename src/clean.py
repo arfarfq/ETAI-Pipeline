@@ -43,14 +43,17 @@ def apply_domain_rules(df, domain_rules):
 
     return out
 
-def drop_duplicates(df: pd.DataFrame, id: list):
+def drop_duplicates(df: pd.DataFrame, id_column: str) -> pd.DataFrame:
     out = df.drop_duplicates()
-    if "id" in out.columns:
-        out = out.drop_duplicates(subset="id", keep="first")
- 
+    if id_column in out.columns:
+        out = out.drop_duplicates(subset=id_column, keep="first")
     return out
 
-def clean_dataset(df: pd.DataFrame, diagnosis: dict) -> pd.DataFrame:
+
+
+def clean_dataset(df: pd.DataFrame, diagnosis: dict,
+                  *, deduplicate: bool = True) -> pd.DataFrame:
+
     """
     Apply the EDA notebook's diagnosis: category cleanup, domain-rule / placeholder ->
     NaN conversion, de-duplication, redundant-column removal. Target-column-agnostic --
@@ -64,6 +67,10 @@ def clean_dataset(df: pd.DataFrame, diagnosis: dict) -> pd.DataFrame:
         if col in out.columns:
             out[col] = pd.to_numeric(out[col].replace(list(placeholder_tokens), np.nan), errors="coerce")
 
+
+    out = out.replace(placeholder_tokens, np.nan)
+
+
     # domain-rule violations -> NaN
     out = apply_domain_rules(out, diagnosis["domain_rules"])
 
@@ -76,7 +83,7 @@ def clean_dataset(df: pd.DataFrame, diagnosis: dict) -> pd.DataFrame:
 
     out = out.drop(columns=cols_to_drop)
 
-    out = drop_duplicates(out, diagnosis["id_column"])
-
+    if deduplicate:
+        out = drop_duplicates(out, diagnosis["id_column"])
 
     return out
