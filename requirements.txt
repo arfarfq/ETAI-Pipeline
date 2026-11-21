@@ -8,3 +8,7 @@ category-encoders>=2.11,<3
 xgboost>=3.4,<4
 optuna>=5,<6
 scipy>=1.18,<2
+
+matplotlib
+statsmodels
+ipykernel
