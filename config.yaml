@@ -67,7 +67,8 @@ model:
       tree_method: hist
 
 output:
-  results_dir: "results" # each run's full report is saved here as a timestamped .txt file
+  results_dir: "results"
+  model_path: "models/model.joblib"
 
 diagnostics:
   id_column: "id"
@@ -186,8 +187,11 @@ preprocessing:
   # seed for the target encoder's internal cross-fitting (week 4: sklearn's TargetEncoder)
   random_state: 42
   imputation:
-    numeric_strategy: "median" # applies to age, juv_fel_count, juv_misd_count, juv_other_count, priors_count
-    categorical_strategy: "most_frequent" # applies to sex, age_cat, c_charge_degree
+    numeric_strategy: "median" # median | mean | knn | iterative | random_forest
+    categorical_strategy: "most_frequent"
+    n_neighbors: 5 # used by knn
+    max_iter: 10 # used by iterative and random_forest
+    n_estimators: 50
 
 cv:
   n_splits: 5

@@ -17,6 +17,7 @@ def save_run(results_dir: str, run: str, config: dict, report_text: str) -> str:
     header = (
         f"Run: {run}\n"
         f"Model: {model_type}\n"
+        f"Imputer: {config['preprocessing'].get('imputation', {}).get('numeric_strategy', 'median')}\n"
         f"Engineered features: {config['engineered_features']}\n"
         f"Test size: {config['test_set']['size']}  "
         f"random_state: {config['test_set']['random_state']}\n"

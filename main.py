@@ -13,7 +13,7 @@ from sklearn.pipeline import Pipeline
 import optuna
 from datetime import datetime
 from tempfile import TemporaryDirectory
-
+import joblib
 from src.data import load_data
 from src.preprocessing import split_features_target, split_dev_test, build_preprocessor, add_engineered_features
 from src.model import build_model
@@ -155,6 +155,15 @@ def main():
         report += "\n" + fairness_report(y_dev, oof_proba, extras_dev, sensitive_attr=config["data"]["sensitive_attr"])
 
         pipeline.fit(X_dev, y_dev)
+        model_path = Path(
+            config.get("output", {}).get("model_path", "models/model.joblib")
+        )
+
+
+        model_path.parent.mkdir(parents=True, exist_ok=True)
+        pipeline.set_params(memory=None)  # Remove the temporary training-cache reference.
+        joblib.dump(pipeline, model_path)
+
         inference_config = config.get("inference", {})
         if inference_config.get("enabled", False):
             new_raw = load_data(inference_config["path"])
@@ -209,6 +218,7 @@ def main():
 
         row = {"run": run, "data": config["data"]["path"], "model": config["model"]["type"], "tuned": tuning_enabled,
             "encoder": config["preprocessing"]["encoder"], "scaler": config["preprocessing"]["scaler"],
+            "imputer": config["preprocessing"].get("imputation", {}).get("numeric_strategy", "median"),
             "params": str(config["model"].get("params")), "tuned_params": str(study.best_params) if tuning_enabled else "",
             "metric": selection_metric, "mean": final_scores["validation"].mean(),
             "std": final_scores["validation"].std(ddof=1), "untuned": untuned, "floor": floor,
@@ -220,7 +230,8 @@ def main():
         runs = save_scores(config.get("output", {}).get("scoreboard", "results/runs.csv"), row)
         same = runs[(runs["data"] == row["data"]) & (runs["metric"] == selection_metric)]
         board = (same.sort_values("mean", ascending=False)
-                [["run", "model", "tuned", "feature_selection", "encoder", "scaler", "mean", "std", "untuned", "floor"]]
+                [["run", "model", "tuned", "feature_selection", "encoder", "scaler", "imputer", "mean", "std", "untuned", "floor"]]
+                .fillna({"imputer": "unknown"})
                 .rename(columns={"mean": selection_metric})
                 .to_string(index=False, float_format=lambda v: f"{v:.3f}"))
         print(f"\nScoreboard (runs on the same data and metric; best first)\n{board}")

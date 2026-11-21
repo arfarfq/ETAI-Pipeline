@@ -21,10 +21,23 @@ from sklearn.preprocessing import (
 from category_encoders import CountEncoder
 from sklearn.model_selection import StratifiedKFold, train_test_split
 from sklearn.metrics import accuracy_score
+from sklearn.experimental import enable_iterative_imputer 
+from sklearn.impute import SimpleImputer, KNNImputer, IterativeImputer
+from sklearn.ensemble import RandomForestRegressor
 
 
 _SCALERS = {"none": "passthrough", "standard": StandardScaler, "minmax": MinMaxScaler, "robust": RobustScaler}
 
+_NUMERIC_IMPUTERS = {
+    "median": lambda cfg, seed: SimpleImputer(strategy="median"),
+    "mean": lambda cfg, seed: SimpleImputer(strategy="mean"),
+    "knn": lambda cfg, seed: KNNImputer(n_neighbors=cfg.get("n_neighbors", 5)),
+    "iterative": lambda cfg, seed: IterativeImputer(max_iter=cfg.get("max_iter", 10), random_state=seed),
+    "random_forest": lambda cfg, seed: IterativeImputer(
+        estimator=RandomForestRegressor(n_estimators=cfg.get("n_estimators", 50), min_samples_leaf=5,
+                                        random_state=seed, n_jobs=-1),
+        max_iter=cfg.get("max_iter", 10), random_state=seed),
+}
 
 _ENCODERS = {
     "onehot": lambda seed: OneHotEncoder(
@@ -118,10 +131,16 @@ def build_preprocessor(preprocessing_config: dict) -> ColumnTransformer:
             random_state=preprocessing_config["target_cv_random_state"],
         ))
 
+    numeric_strategy = imputation.get("numeric_strategy", "median")
+
     numeric_pipeline = Pipeline([
-        ("impute", SimpleImputer(strategy=imputation.get("numeric_strategy", "median"))),
         ("scale", scaler),
+        ("impute", _NUMERIC_IMPUTERS[numeric_strategy](
+            imputation,
+            preprocessing_config.get("random_state"),
+        )),
     ])
+
     categorical_pipeline = Pipeline([
         ("impute", SimpleImputer(strategy=imputation.get("categorical_strategy", "most_frequent"))),
         ("encode", encoder),

@@ -128,6 +128,47 @@ marital_status
 occupation
 relationship
 
+## Week 10
+
+Dealing with missing values and deploying a model.
+
+### Missing Values
+
+I compared different imputers using XGBoost, robust scaling, target encoding, voting feature selection, and the same five stratified development-set folds with tuning disabled:
+
+MEDIAN
+roc_auc: 0.721 ± 0.012 train-validation gap: +0.027 no-model floor: 0.500
+
+MEAN
+roc_auc: 0.719 ± 0.013 train-validation gap: +0.029 no-model floor: 0.500
+
+KNN
+roc_auc: 0.721 ± 0.013 train-validation gap: +0.030 no-model floor: 0.500
+
+ITERATIVE
+roc_auc: 0.721 ± 0.013 train-validation gap: +0.032 no-model floor: 0.500
+
+RANDOM FOREST
+roc_auc: 0.720 ± 0.015 train-validation gap: +0.033 no-model floor: 0.500
+
+| Candidate     | Mean ROC-AUC difference | Corrected t | Corrected p-value | Folds won |
+| ------------- | ----------------------: | ----------: | ----------------: | --------: |
+| mean          |               -0.001905 |   -0.684097 |          0.531490 |       2/5 |
+| knn           |               -0.000172 |   -0.063346 |          0.952530 |       2/5 |
+| iterative     |               +0.000016 |    0.008690 |          0.993483 |       2/5 |
+| random_forest |               -0.000862 |   -0.395221 |          0.712851 |       2/5 |
+
+Median imputation is selected as it is computationally inexpensive and there is no statistical evidence that any other imputer is better.
+
+### Making Predictions
+
+predict.py was implements. It uses the most recently trained model to predict unseen, unlabelled samples. The predictions contain the following:  
+id  
+probability
+prediction
+
+The prediction pipelin applied the cleaning rules, while preserving input order and duplicates.
+
 ## Project structure
 
 ```
